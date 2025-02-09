@@ -37,20 +37,16 @@
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
 
-        let useFrontCamera = true; // Define a câmera inicial como frontal
-        let currentStream = null; // Armazena o stream atual para alternar depois
+        let useFrontCamera = true;
+        let currentStream = null;
 
         async function iniciarCamera() {
             if (currentStream) {
-                currentStream.getTracks().forEach(track => track.stop()); // Para o stream anterior
+                currentStream.getTracks().forEach(track => track.stop());
             }
-
             const constraints = {
-                video: {
-                    facingMode: useFrontCamera ? "user" : "environment"
-                }
+                video: { facingMode: useFrontCamera ? "user" : "environment" }
             };
-
             try {
                 currentStream = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = currentStream;
@@ -60,7 +56,7 @@
         }
 
         function alternarCamera() {
-            useFrontCamera = !useFrontCamera; // Alterna entre frontal e traseira
+            useFrontCamera = !useFrontCamera;
             iniciarCamera();
         }
 
@@ -81,12 +77,23 @@
             })
             .then(response => response.json())
             .then(data => {
-                document.getElementById('resultado').innerText = data.texto || "Erro ao processar imagem.";
+                if (data.texto) {
+                    document.getElementById('resultado').innerText = data.texto;
+                    falarTexto(data.texto); // Chama a função para falar o texto
+                } else {
+                    document.getElementById('resultado').innerText = "Erro ao processar imagem.";
+                }
             })
             .catch(error => console.error("Erro ao enviar imagem:", error));
         }
 
-        // Inicia a câmera ao carregar a página
+        function falarTexto(texto) {
+            const synth = window.speechSynthesis;
+            const utterance = new SpeechSynthesisUtterance(texto);
+            utterance.lang = "pt-BR"; // Define o idioma para português do Brasil
+            synth.speak(utterance);
+        }
+
         iniciarCamera();
     </script>
 </body>
