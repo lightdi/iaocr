@@ -26,20 +26,23 @@
     <video id="camera" autoplay width="400" height="300"></video>
     <canvas id="canvas" style="display: none;"></canvas>
     <br>
-    <button onclick="tirarFoto()">Capturar Imagem</button>
+    <button onclick="tirarFoto()">📷 Capturar Imagem</button>
     <button id="lerTexto" style="display:none;" onclick="enviarImagem()">📖 Ler Texto</button>
+    <button id="ouvirTexto" style="display:none;" onclick="falarTexto()">🔊 Ouvir Texto</button>
     <p id="resultado"></p>
 
     <script>
         const video = document.getElementById('camera');
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
+        let textoExtraido = "";
 
-        // Acessa a câmera
+        // Ativa a câmera do usuário
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(stream => { video.srcObject = stream; })
             .catch(err => console.error("Erro ao acessar a câmera:", err));
 
+        // Captura uma foto da câmera
         function tirarFoto() {
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
@@ -48,6 +51,7 @@
             document.getElementById('lerTexto').style.display = 'block';
         }
 
+        // Envia a imagem para a API e recebe o texto extraído
         function enviarImagem() {
             const imagemBase64 = canvas.toDataURL('image/jpeg').split(',')[1];
 
@@ -58,9 +62,28 @@
             })
             .then(response => response.json())
             .then(data => {
-                document.getElementById('resultado').innerText = data.texto || "Erro ao processar imagem.";
+                if (data.texto) {
+                    textoExtraido = data.texto; // Armazena o texto extraído
+                    document.getElementById('resultado').innerText = textoExtraido;
+                    document.getElementById('ouvirTexto').style.display = 'block';
+                    falarTexto(); // Fala automaticamente após extrair o texto
+                } else {
+                    alert("Erro ao extrair texto.");
+                }
             })
             .catch(error => console.error("Erro ao enviar imagem:", error));
+        }
+
+        // Usa a Web Speech API para falar o texto extraído
+        function falarTexto() {
+            if (textoExtraido) {
+                const synth = window.speechSynthesis;
+                const utterance = new SpeechSynthesisUtterance(textoExtraido);
+                utterance.lang = 'pt-BR'; // Define o idioma para português do Brasil
+                synth.speak(utterance);
+            } else {
+                alert("Nenhum texto disponível para leitura.");
+            }
         }
     </script>
 </body>
