@@ -36,10 +36,7 @@ pydantic==2.10.6
 pydantic_core==2.27.2
 pyngrok==7.2.3
 pyparsing==3.2.1
-pypiwin32==223
 python-dotenv==1.0.1
-pyttsx3==2.98
-pywin32==308
 PyYAML==6.0.2
 requests==2.32.3
 rsa==4.9
