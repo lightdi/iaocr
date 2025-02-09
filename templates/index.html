@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leitor de Texto</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        video, canvas {
+            width: 100%;
+            max-width: 400px;
+            margin: 10px;
+        }
+        button {
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Leitor de Texto</h1>
+    <video id="camera" autoplay width="400" height="300"></video>
+    <canvas id="canvas" style="display: none;"></canvas>
+    <br>
+    <button onclick="tirarFoto()">Capturar Imagem</button>
+    <button id="lerTexto" style="display:none;" onclick="enviarImagem()">📖 Ler Texto</button>
+    <p id="resultado"></p>
+
+    <script>
+        const video = document.getElementById('camera');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Acessa a câmera
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => { video.srcObject = stream; })
+            .catch(err => console.error("Erro ao acessar a câmera:", err));
+
+        function tirarFoto() {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            document.getElementById('lerTexto').style.display = 'block';
+        }
+
+        function enviarImagem() {
+            const imagemBase64 = canvas.toDataURL('image/jpeg').split(',')[1];
+
+            fetch('/extrair_texto', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ imagem: imagemBase64 })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('resultado').innerText = data.texto || "Erro ao processar imagem.";
+            })
+            .catch(error => console.error("Erro ao enviar imagem:", error));
+        }
+    </script>
+</body>
+</html>
