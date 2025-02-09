@@ -18,6 +18,7 @@
             padding: 10px;
             font-size: 16px;
             cursor: pointer;
+            margin: 5px;
         }
     </style>
 </head>
@@ -26,32 +27,50 @@
     <video id="camera" autoplay width="400" height="300"></video>
     <canvas id="canvas" style="display: none;"></canvas>
     <br>
-    <button onclick="tirarFoto()">📷 Capturar Imagem</button>
+    <button onclick="tirarFoto()">📸 Capturar Imagem</button>
     <button id="lerTexto" style="display:none;" onclick="enviarImagem()">📖 Ler Texto</button>
-    <button id="ouvirTexto" style="display:none;" onclick="falarTexto()">🔊 Ouvir Texto</button>
+    <button onclick="alternarCamera()">🔄 Virar Câmera</button>
     <p id="resultado"></p>
 
     <script>
         const video = document.getElementById('camera');
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
-        let textoExtraido = "";
 
-        // Ativa a câmera do usuário
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => { video.srcObject = stream; })
-            .catch(err => console.error("Erro ao acessar a câmera:", err));
+        let useFrontCamera = true; // Define a câmera inicial como frontal
+        let currentStream = null; // Armazena o stream atual para alternar depois
 
-        // Captura uma foto da câmera
+        async function iniciarCamera() {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop()); // Para o stream anterior
+            }
+
+            const constraints = {
+                video: {
+                    facingMode: useFrontCamera ? "user" : "environment"
+                }
+            };
+
+            try {
+                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = currentStream;
+            } catch (err) {
+                console.error("Erro ao acessar a câmera:", err);
+            }
+        }
+
+        function alternarCamera() {
+            useFrontCamera = !useFrontCamera; // Alterna entre frontal e traseira
+            iniciarCamera();
+        }
+
         function tirarFoto() {
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
             document.getElementById('lerTexto').style.display = 'block';
         }
 
-        // Envia a imagem para a API e recebe o texto extraído
         function enviarImagem() {
             const imagemBase64 = canvas.toDataURL('image/jpeg').split(',')[1];
 
@@ -62,29 +81,13 @@
             })
             .then(response => response.json())
             .then(data => {
-                if (data.texto) {
-                    textoExtraido = data.texto; // Armazena o texto extraído
-                    document.getElementById('resultado').innerText = textoExtraido;
-                    document.getElementById('ouvirTexto').style.display = 'block';
-                    falarTexto(); // Fala automaticamente após extrair o texto
-                } else {
-                    alert("Erro ao extrair texto.");
-                }
+                document.getElementById('resultado').innerText = data.texto || "Erro ao processar imagem.";
             })
             .catch(error => console.error("Erro ao enviar imagem:", error));
         }
 
-        // Usa a Web Speech API para falar o texto extraído
-        function falarTexto() {
-            if (textoExtraido) {
-                const synth = window.speechSynthesis;
-                const utterance = new SpeechSynthesisUtterance(textoExtraido);
-                utterance.lang = 'pt-BR'; // Define o idioma para português do Brasil
-                synth.speak(utterance);
-            } else {
-                alert("Nenhum texto disponível para leitura.");
-            }
-        }
+        // Inicia a câmera ao carregar a página
+        iniciarCamera();
     </script>
 </body>
 </html>
