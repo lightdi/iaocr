@@ -1,100 +1,108 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leitor de Texto</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-        }
-        video, canvas {
-            width: 100%;
-            max-width: 400px;
-            margin: 10px;
-        }
-        button {
-            padding: 10px;
-            font-size: 16px;
-            cursor: pointer;
-            margin: 5px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BaLeIA: Leitor de Texto por IA</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --if-verde: #32A041;
+      --if-vermelho: #C8191E;
+    }
+    .navbar { background-color: var(--if-verde); }
+    .btn-primary { background-color: var(--if-verde); border-color: var(--if-verde); }
+    .btn-secondary { background-color: var(--if-vermelho); border-color: var(--if-vermelho); }
+    #resultado { white-space: pre-wrap; }
+  </style>
 </head>
 <body>
-    <h1>Leitor de Texto</h1>
-    <video id="camera" autoplay width="400" height="300"></video>
-    <canvas id="canvas" style="display: none;"></canvas>
-    <br>
-    <button onclick="tirarFoto()">📸 Capturar Imagem</button>
-    <button id="lerTexto" style="display:none;" onclick="enviarImagem()">📖 Ler Texto</button>
-    <button onclick="alternarCamera()">🔄 Virar Câmera</button>
-    <p id="resultado"></p>
 
-    <script>
-        const video = document.getElementById('camera');
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
+  <!-- Navbar com nome do projeto -->
+  <nav class="navbar navbar-dark">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" href="#">
+        <img src="{{ url_for('static', filename='sousa.jpg') }}" alt="Logo IF" width="70" height="90" class="me-2">
+        <div>
+          <strong>BaLeIA</strong><br>
+          <small>Bora Automatizar a Leitura com IA</small>
+        </div>
+      </a>
+    </div>
+  </nav>
 
-        let useFrontCamera = true;
-        let currentStream = null;
+  <div class="container py-4">
+    <h2 class="text-center mb-4">Leitura de Texto por Câmera</h2>
 
-        async function iniciarCamera() {
-            if (currentStream) {
-                currentStream.getTracks().forEach(track => track.stop());
-            }
-            const constraints = {
-                video: { facingMode: useFrontCamera ? "user" : "environment" }
-            };
-            try {
-                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
-                video.srcObject = currentStream;
-            } catch (err) {
-                console.error("Erro ao acessar a câmera:", err);
-            }
+    <div class="d-flex justify-content-center mb-4">
+      <video id="camera" autoplay class="border rounded shadow-sm"></video>
+      <canvas id="canvas" style="display:none;"></canvas>
+    </div>
+
+    <div class="d-flex justify-content-center mb-4 flex-wrap">
+      <button class="btn btn-primary me-2 mb-2" onclick="alternarCamera()">🔄 Alternar</button>
+      <button class="btn btn-primary me-2 mb-2" onclick="tirarFoto()">📸 Foto</button>
+      <button id="lerTexto" class="btn btn-secondary mb-2" style="display:none;" onclick="enviarImagem()">📖 Ler Texto</button>
+    </div>
+
+    <div class="border rounded p-3 bg-white shadow-sm">
+      <p id="resultado" class="mb-0">Aguardando leitura...</p>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Script para câmera e extração (seu código) -->
+  <script>
+    const video = document.getElementById('camera');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let useFrontCamera = true, currentStream = null;
+
+    async function iniciarCamera() {
+      if (currentStream) currentStream.getTracks().forEach(t => t.stop());
+      try {
+        currentStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: useFrontCamera ? "user" : "environment" }
+        });
+        video.srcObject = currentStream;
+      } catch (err) {
+        console.error("Erro ao acessar a câmera:", err);
+      }
+    }
+
+    function alternarCamera() {
+      useFrontCamera = !useFrontCamera;
+      iniciarCamera();
+    }
+
+    function tirarFoto() {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0);
+      document.getElementById('lerTexto').style.display = 'inline-block';
+    }
+
+    function enviarImagem() {
+      const imagemBase64 = canvas.toDataURL('image/jpeg').split(',')[1];
+      fetch('/extrair_texto', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imagem: imagemBase64 })
+      })
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('resultado').innerText = data.texto || data.erro;
+        if (data.texto) {
+          const u = new SpeechSynthesisUtterance(data.texto);
+          u.lang = 'pt-BR';
+          window.speechSynthesis.speak(u);
         }
+      })
+      .catch(console.error);
+    }
 
-        function alternarCamera() {
-            useFrontCamera = !useFrontCamera;
-            iniciarCamera();
-        }
-
-        function tirarFoto() {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            document.getElementById('lerTexto').style.display = 'block';
-        }
-
-        function enviarImagem() {
-            const imagemBase64 = canvas.toDataURL('image/jpeg').split(',')[1];
-
-            fetch('/extrair_texto', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ imagem: imagemBase64 })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.texto) {
-                    document.getElementById('resultado').innerText = data.texto;
-                    falarTexto(data.texto); // Chama a função para falar o texto
-                } else {
-                    document.getElementById('resultado').innerText = "Erro ao processar imagem.";
-                }
-            })
-            .catch(error => console.error("Erro ao enviar imagem:", error));
-        }
-
-        function falarTexto(texto) {
-            const synth = window.speechSynthesis;
-            const utterance = new SpeechSynthesisUtterance(texto);
-            utterance.lang = "pt-BR"; // Define o idioma para português do Brasil
-            synth.speak(utterance);
-        }
-
-        iniciarCamera();
-    </script>
+    iniciarCamera();
+  </script>
 </body>
 </html>

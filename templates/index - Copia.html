@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leitor de Texto</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        video, canvas {
+            width: 100%;
+            max-width: 400px;
+            margin: 10px;
+        }
+        button {
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Leitor de Texto</h1>
+    <video id="camera" autoplay width="400" height="300"></video>
+    <canvas id="canvas" style="display: none;"></canvas>
+    <br>
+    <button onclick="tirarFoto()">📸 Capturar Imagem</button>
+    <button id="lerTexto" style="display:none;" onclick="enviarImagem()">📖 Ler Texto</button>
+    <button onclick="alternarCamera()">🔄 Virar Câmera</button>
+    <p id="resultado"></p>
+
+    <script>
+        const video = document.getElementById('camera');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        let useFrontCamera = true;
+        let currentStream = null;
+
+        async function iniciarCamera() {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
+            const constraints = {
+                video: { facingMode: useFrontCamera ? "user" : "environment" }
+            };
+            try {
+                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = currentStream;
+            } catch (err) {
+                console.error("Erro ao acessar a câmera:", err);
+            }
+        }
+
+        function alternarCamera() {
+            useFrontCamera = !useFrontCamera;
+            iniciarCamera();
+        }
+
+        function tirarFoto() {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            document.getElementById('lerTexto').style.display = 'block';
+        }
+
+        function enviarImagem() {
+            const imagemBase64 = canvas.toDataURL('image/jpeg').split(',')[1];
+
+            fetch('/extrair_texto', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ imagem: imagemBase64 })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.texto) {
+                    document.getElementById('resultado').innerText = data.texto;
+                    falarTexto(data.texto); // Chama a função para falar o texto
+                } else {
+                    document.getElementById('resultado').innerText = "Erro ao processar imagem.";
+                }
+            })
+            .catch(error => console.error("Erro ao enviar imagem:", error));
+        }
+
+        function falarTexto(texto) {
+            const synth = window.speechSynthesis;
+            const utterance = new SpeechSynthesisUtterance(texto);
+            utterance.lang = "pt-BR"; // Define o idioma para português do Brasil
+            synth.speak(utterance);
+        }
+
+        iniciarCamera();
+    </script>
+</body>
+</html>

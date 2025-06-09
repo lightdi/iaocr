@@ -1,0 +1,58 @@
+.topo{
+    color:;
+    text-align:center;
+}
+.img{
+    padding-left: 43%;
+}
+.cam{
+    background-color:;
+    text-align:center;
+}
+.centro{
+    display:flex;
+}
+.ce {
+    margin-left:40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    font-size:3px;
+}
+.ce button {
+    background-color:gray;
+    color: black;
+    padding: 25px 55px;/
+    border: none;
+    border-radius: 25px;/
+}
+.es {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    font-size:3px;
+}
+.es button {
+    background-color:gray;
+    color: black;
+    padding: 25px 55px;/
+    border: none;
+    border-radius: 25px;/
+}
+.di {
+    margin-left:10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    font-size:3px;
+}
+.di button {
+    background-color:gray;
+    color: black;
+    padding: 25px 60px;/
+    border: none;
+    border-radius: 25px;/
+}
