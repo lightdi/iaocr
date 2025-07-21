@@ -15,7 +15,7 @@ GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')  # Chave da API carregada do ambien
 genai.configure(api_key=GEMINI_API_KEY)
 
 
-def extract_text_from_image(image_path, prompt_text="Extraia o texto contido nesta imagem:"):
+def extract_text_from_image(image_path, prompt_text="Extraia o texto contido nesta imagem e traduza para português ser for em outro idioma:"):
     """
     Extrai texto de uma imagem usando a API Gemini.
 
