@@ -4,6 +4,7 @@ import google.generativeai as genai
 from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
 
+
 # Carrega variáveis de ambiente
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -20,7 +21,7 @@ def extract_text_from_image(image_bytes):
     try:
         model = genai.GenerativeModel('gemini-1.5-flash')
         image_data = {"mime_type": "image/jpeg", "data": image_bytes}
-        response = model.generate_content(["Extraia o texto contido nesta imagem:", image_data])
+        response = model.generate_content(["Extraia o texto contido nesta imagem e traduza para português ser for em outro idioma e retorne apenas o texto:", image_data])
         return response.text
     except Exception as e:
         return f"Erro ao extrair texto: {str(e)}"
@@ -47,5 +48,5 @@ def extrair_texto():
     return jsonify({'erro': 'Nenhuma imagem recebida'})
 
 if __name__ == '__main__':
-    app.run(debug=True)
-    #app.run(host='0.0.0.0', port=5000, debug=True)
+    #app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)

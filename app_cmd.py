@@ -6,6 +6,8 @@ import os
 import io
 from dotenv import load_dotenv
 import google.generativeai as genai
+from langdetect import detect
+from deep_translator import GoogleTranslator
 
 # Carrega as variáveis de ambiente do arquivo .env
 load_dotenv()
@@ -14,8 +16,25 @@ load_dotenv()
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')  # Chave da API carregada do ambiente
 genai.configure(api_key=GEMINI_API_KEY)
 
+def traduz(texto, idioma):
+    if idioma == "pt": #Português
+        return texto
 
-def extract_text_from_image(image_path, prompt_text="Extraia o texto contido nesta imagem e traduza para português ser for em outro idioma:"):
+    elif idioma == "en": #Inglês
+        tradutor = GoogleTranslator(source='en', target='pt')
+        traducao = tradutor.translate(texto)
+        return traducao
+
+    elif idioma == "es": #Espanhol
+        tradutor = GoogleTranslator(source='es', target='pt')
+        traducao = tradutor.translate(texto)
+        return traducao
+
+    else:
+        print("Idioma não reconhecido")
+        return texto
+
+def extract_text_from_image(image_path, prompt_text="Extraia o texto contido nesta imagem:"):
     """
     Extrai texto de uma imagem usando a API Gemini.
 
@@ -96,8 +115,14 @@ def main():
 
     # Envia a imagem para a API do Gemini
     texto = extract_text_from_image(caminho_imagem)
+    texto = traduz(texto, detect(texto))  # Detecta o idioma e traduz se necessário
     print(f"Texto extraído: {texto}")
 
+
+    # Salva o texto extraído em um arquivo
+    with open("texto_extraido.txt", "w", encoding="utf-8") as arquivo:
+        arquivo.write(texto)
+        
     # Fala o texto extraído
     falar_texto(texto)
 
