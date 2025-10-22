@@ -7,7 +7,7 @@ import requests
 import io
 import gtts
 import time
-from playsound import playsound
+import pygame
 from pydub import AudioSegment
 import google.generativeai as genai
 from dotenv import load_dotenv
@@ -18,6 +18,10 @@ import asyncio
 import edge_tts
 import speech_recognition as sr
 import platform
+
+#sudo apt install ffmpeg -y
+
+pygame.mixer.init()
 
 # Carrega as variáveis de ambiente do arquivo .env
 load_dotenv()
@@ -97,12 +101,18 @@ def extrai_texto_da_imagem(image_path):
         return None
 
 
+def tocar_audio(caminho_arquivo):
+    pygame.mixer.music.load(caminho_arquivo)
+    pygame.mixer.music.play()
+    while pygame.mixer.music.get_busy():
+        pygame.time.Clock().tick(10)  # Espera o áudio terminar
+
 async def falar_mensagem_inicial():
     mensagem = "Só um instante, a leitura está sendo processada!"
     communicate = edge_tts.Communicate(mensagem, voice="pt-BR-AntonioNeural", rate="+" + str(velocidade) + "%")
     if not os.path.exists("mensagem_inicial.mp3"):
         await communicate.save("mensagem_inicial.mp3")
-    playsound("mensagem_inicial.mp3")
+    tocar_audio("mensagem_inicial.mp3")
 
 
 async def falar_texto(texto):
@@ -115,7 +125,7 @@ async def falar_texto(texto):
         elapsed_time = end_time - start_time
         print(f'Tempo (Texto para Audio): {elapsed_time:.2f} segundos')
         start_time = time.time()
-        playsound(f.name)
+        tocar_audio(f.name)
         end_time = time.time()
         elapsed_time = end_time - start_time
         print(f'Tempo de reprodução do áudio: {elapsed_time:.2f} segundos')
@@ -169,12 +179,12 @@ def fazer_perguntas_voz():
 
     while True:
 
-        playsound("mensagem_duvida.mp3")
+        tocar_audio("mensagem_duvida.mp3")
 
         # Usa o microfone como fonte de áudio
         with sr.Microphone() as source:
             recognizer.adjust_for_ambient_noise(source)  # Ajusta para o ruído ambiente
-            playsound("beep.mp3")
+            tocar_audio("beep.mp3")
             audio = recognizer.listen(source)  # Escuta o que foi falado
 
         try:
@@ -188,7 +198,7 @@ def fazer_perguntas_voz():
 
         except sr.UnknownValueError:
             print("Não consegui entender o áudio.")
-            playsound("mensagem_fim_duvida.mp3")
+            tocar_audio("mensagem_fim_duvida.mp3")
             return
 
         except sr.RequestError:
@@ -252,7 +262,7 @@ def main():
                 print(f'Tempo de processamento da produção do áudio: {elapsed_time:.2f} segundos')
                 # fazer_perguntas_voz()
             else:
-                playsound("mensagem_internet.mp3")
+                tocar_audio("mensagem_internet.mp3")
 
         if key == ord("q"): # Finaliza a execução
             #if os.path.exists("texto.txt"):
