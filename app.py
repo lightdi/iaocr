@@ -19,7 +19,7 @@ app = Flask(__name__)
 # Função para extrair texto
 def extract_text_from_image(image_bytes):
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.5-flash')
         image_data = {"mime_type": "image/jpeg", "data": image_bytes}
         response = model.generate_content(["Extraia o texto contido nesta imagem e traduza para português ser for em outro idioma e retorne apenas o texto:", image_data])
         return response.text
